@@ -25,10 +25,19 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    const serviceCollection = client
+    const servicesCollection = client
       .db("assignment11DB")
-      .collections("services");
+      .collection("services");
 
+    app.get("/services", async (req, res) => {
+      try {
+        const cursor = (await servicesCollection).find();
+        const result = await cursor.toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
