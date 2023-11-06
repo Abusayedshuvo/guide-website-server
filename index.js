@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -31,13 +31,39 @@ async function run() {
 
     app.get("/services", async (req, res) => {
       try {
-        const cursor = (await servicesCollection).find();
-        const result = await cursor.toArray();
+        const { limit = 4 } = req.query;
+        const result = await servicesCollection
+          .find()
+          .limit(Number(limit))
+          .toArray();
         res.send(result);
       } catch (error) {
         console.log(error);
       }
     });
+
+    app.get("/services-all", async (req, res) => {
+      try {
+        console.log(req.query);
+        const size = parseInt(req.query.limit);
+        const { limit = size } = req.query;
+        const result = await servicesCollection
+          .find()
+          .limit(Number(limit))
+          .toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/services/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await servicesCollection.findOne(query);
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
