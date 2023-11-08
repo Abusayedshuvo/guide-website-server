@@ -10,7 +10,11 @@ const port = process.env.PORT || 5000;
 // Middle Ware
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: [
+      "http://localhost:5173",
+      "https://assignment-11-1a432.web.app",
+      "https://assignment-11-1a432.firebaseapp.com",
+    ],
     credentials: true,
   })
 );
@@ -191,6 +195,23 @@ async function run() {
         }
         const userEmail = req.params.id;
         const query = { userEmail: userEmail };
+        const result = await bookCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/pending/:id", verifyToken, async (req, res) => {
+      try {
+        // if (req.user.email !== req.params.id) {
+        //   return res.status(403).send({ message: "Forbidden Access" });
+        // }
+        const userEmail = req.params.id;
+        const query = {
+          userEmail: { $ne: userEmail },
+          authorEmail: userEmail,
+        };
         const result = await bookCollection.find(query).toArray();
         res.send(result);
       } catch (error) {
