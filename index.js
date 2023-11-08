@@ -90,16 +90,6 @@ async function run() {
       }
     });
 
-    app.post("/book", async (req, res) => {
-      try {
-        const book = req.body;
-        const result = await bookCollection.insertOne(book);
-        res.send(result);
-      } catch (error) {
-        console.log(error);
-      }
-    });
-
     app.put("/services/:id", async (req, res) => {
       try {
         const id = req.params.id;
@@ -135,6 +125,27 @@ async function run() {
         console.log(id);
         const query = { _id: new ObjectId(id) };
         const result = await servicesCollection.deleteOne(query);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.post("/book", async (req, res) => {
+      try {
+        const book = req.body;
+        const result = await bookCollection.insertOne(book);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/book/:id", async (req, res) => {
+      try {
+        const userEmail = req.params.id;
+        const query = { userEmail: userEmail };
+        const result = await bookCollection.find(query).toArray();
         res.send(result);
       } catch (error) {
         console.log(error);
