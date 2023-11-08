@@ -8,9 +8,14 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // Middle Ware
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  })
+);
 app.use(express.json());
-app.use(cookieParser);
+app.use(cookieParser());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.hsewnp0.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -23,6 +28,22 @@ const client = new MongoClient(uri, {
   },
 });
 
+// Middlewares
+
+const verifyToken = (req, res, next) => {
+  const token = req?.cookies?.token;
+  if (!token) {
+    return res.status(401).send({ message: "UnAuthorized Access" });
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "UnAuthorized Access" });
+    }
+    req.user = decoded;
+    next();
+  });
+};
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -33,6 +54,23 @@ async function run() {
 
     const bookCollection = client.db("assignment11DB").collection("book");
     const contactCollection = client.db("assignment11DB").collection("contact");
+
+    // JWT Token
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
+        expiresIn: "3h",
+      });
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+        })
+        .send({ success: true });
+    });
+
+    // require("crypto").randomBytes(64).toString('hex')
 
     app.get("/services", async (req, res) => {
       try {
@@ -72,8 +110,11 @@ async function run() {
       }
     });
 
-    app.get("/my-services/:id", async (req, res) => {
+    app.get("/my-services/:id", verifyToken, async (req, res) => {
       try {
+        if (req.user.email !== req.params.id) {
+          return res.status(403).send({ message: "Forbidden Access" });
+        }
         const userEmail = req.params.id;
         const query = { userEmail: userEmail };
         const result = await servicesCollection.find(query).toArray();
@@ -125,7 +166,6 @@ async function run() {
     app.delete("/services-all/:id", async (req, res) => {
       try {
         const id = req.params.id;
-        console.log(id);
         const query = { _id: new ObjectId(id) };
         const result = await servicesCollection.deleteOne(query);
         res.send(result);
@@ -144,8 +184,11 @@ async function run() {
       }
     });
 
-    app.get("/book/:id", async (req, res) => {
+    app.get("/book/:id", verifyToken, async (req, res) => {
       try {
+        if (req.user.email !== req.params.id) {
+          return res.status(403).send({ message: "Forbidden Access" });
+        }
         const userEmail = req.params.id;
         const query = { userEmail: userEmail };
         const result = await bookCollection.find(query).toArray();
