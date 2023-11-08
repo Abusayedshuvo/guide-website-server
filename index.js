@@ -29,6 +29,8 @@ async function run() {
       .db("assignment11DB")
       .collection("services");
 
+    const bookCollection = client.db("assignment11DB").collection("book");
+
     app.get("/services", async (req, res) => {
       try {
         const { limit = 4 } = req.query;
@@ -44,7 +46,6 @@ async function run() {
 
     app.get("/services-all", async (req, res) => {
       try {
-        console.log(req.query);
         const size = parseInt(req.query.limit);
         const { limit = size } = req.query;
         const result = await servicesCollection
@@ -58,10 +59,86 @@ async function run() {
     });
 
     app.get("/services/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await servicesCollection.findOne(query);
-      res.send(result);
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await servicesCollection.findOne(query);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/my-services/:id", async (req, res) => {
+      try {
+        const userEmail = req.params.id;
+        const query = { userEmail: userEmail };
+        const result = await servicesCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.post("/services", async (req, res) => {
+      try {
+        const service = req.body;
+        const result = await servicesCollection.insertOne(service);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.post("/book", async (req, res) => {
+      try {
+        const book = req.body;
+        const result = await bookCollection.insertOne(book);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.put("/services/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const option = { upsert: true };
+        const updateServices = req.body;
+        const services = {
+          $set: {
+            serviceName: updateServices.serviceName,
+            serviceImage: updateServices.serviceImage,
+            userName: updateServices.userName,
+            userEmail: updateServices.userEmail,
+            userPhoto: updateServices.userPhoto,
+            price: updateServices.price,
+            area: updateServices.area,
+            serviceDescription: updateServices.serviceDescription,
+          },
+        };
+        const result = await servicesCollection.updateOne(
+          filter,
+          services,
+          option
+        );
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.delete("/services-all/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        console.log(id);
+        const query = { _id: new ObjectId(id) };
+        const result = await servicesCollection.deleteOne(query);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     // Send a ping to confirm a successful connection
