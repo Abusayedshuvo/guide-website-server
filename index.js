@@ -30,6 +30,7 @@ async function run() {
       .collection("services");
 
     const bookCollection = client.db("assignment11DB").collection("book");
+    const contactCollection = client.db("assignment11DB").collection("contact");
 
     app.get("/services", async (req, res) => {
       try {
@@ -146,6 +147,16 @@ async function run() {
         const userEmail = req.params.id;
         const query = { userEmail: userEmail };
         const result = await bookCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.post("/contact", async (req, res) => {
+      try {
+        const contact = req.body;
+        const result = await contactCollection.insertOne(contact);
         res.send(result);
       } catch (error) {
         console.log(error);
