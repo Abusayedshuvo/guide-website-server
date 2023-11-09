@@ -11,9 +11,9 @@ const port = process.env.PORT || 5000;
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
       "https://assignment-11-1a432.web.app",
       "https://assignment-11-1a432.firebaseapp.com",
+      "http://localhost:5173",
     ],
     credentials: true,
   })
@@ -74,8 +74,6 @@ async function run() {
         .send({ success: true });
     });
 
-    // require("crypto").randomBytes(64).toString('hex')
-
     app.get("/services", async (req, res) => {
       try {
         const { limit = 4 } = req.query;
@@ -114,11 +112,8 @@ async function run() {
       }
     });
 
-    app.get("/my-services/:id", verifyToken, async (req, res) => {
+    app.get("/my-services/:id", async (req, res) => {
       try {
-        if (req.user.email !== req.params.id) {
-          return res.status(403).send({ message: "Forbidden Access" });
-        }
         const userEmail = req.params.id;
         const query = { userEmail: userEmail };
         const result = await servicesCollection.find(query).toArray();
@@ -204,9 +199,9 @@ async function run() {
 
     app.get("/pending/:id", verifyToken, async (req, res) => {
       try {
-        // if (req.user.email !== req.params.id) {
-        //   return res.status(403).send({ message: "Forbidden Access" });
-        // }
+        if (req.user.email !== req.params.id) {
+          return res.status(403).send({ message: "Forbidden Access" });
+        }
         const userEmail = req.params.id;
         const query = {
           userEmail: { $ne: userEmail },
